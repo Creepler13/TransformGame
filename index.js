@@ -81,7 +81,6 @@ function doKeyStuff() {
     movePlayer(addX, addY)
 }
 
-
 function movePlayer(addToX, addToY) {
     if (worldEntitys[0].moveCooldown == 0) {
         worldEntitys[0].y += addToY;
