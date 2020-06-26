@@ -43,7 +43,6 @@ document.onkeydown = function KeyEventHandler(e) {
     if (!keysPressed.includes(code)) {
         keysPressed.push(code);
     }
-
 }
 
 function doKeyStuff() {
