@@ -61,10 +61,7 @@ class Entity {
         this.doSpecial = () => { special(); this.cooldown = types[this.type].cooldown };
 
         this.special = special
-
     }
-
-
 }
 
 var types = {
