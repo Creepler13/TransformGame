@@ -73,8 +73,7 @@ var types = {
 }
 
 function createEntity(x, y, type) {
-
-
+    
     var color = types[type].color;
     var width = types[type].width;
     var height = types[type].height;

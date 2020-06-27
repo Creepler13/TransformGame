@@ -19,15 +19,19 @@ class Ai {
             var addX = 0;
             var addY = 0;
             if (dist <= types[e.type].scareRadius) {
-                if (player.x - e.x < 0) {
-                    addX = e.movementSpeed;
-                } else {
+                var xDist = player.x - e.x
+                var yDist = player.y - e.y
+                if (xDist > e.height) {
                     addX = e.movementSpeed * -1;
                 }
-                if (player.y - e.y < 0) {
-                    addY = e.movementSpeed;
-                } else {
+                if (xDist < player.height * -1) {
+                    addX = e.movementSpeed;
+                }
+                if (yDist > e.height) {
                     addY = e.movementSpeed * -1;
+                }
+                if (yDist < player.height * -1) {
+                    addY = e.movementSpeed;
                 }
                 if (e.y + addY < 0 || e.y + addY > worldInfo.maxY - e.height) {
                     addY = 0;

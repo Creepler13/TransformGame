@@ -8,9 +8,11 @@ var keys = [];
 for (var k in types) keys.push(k);
 for (let i = 2; i < keys.length; i++) {
     for (let index = 0; index < types[keys[i]].population; index++) {
-        worldEntitys.push(createEntity(Math.floor(Math.random() * Math.floor(worldInfo.maxX)), Math.floor(Math.random() * Math.floor(worldInfo.maxY)), keys[i]))
+        randomSpawnEntity(keys[i]);
     }
 }
+
+
 var playerView = { maxX: canvas.width / 2, maxY: canvas.height / 2, cameraX: worldEntitys[0].x, cameraY: worldEntitys[0].y };
 var ai = new Ai();
 var keysPressed = [];
@@ -76,6 +78,14 @@ function doKeyStuff() {
                     worldEntitys[0].doSpecial();
                 }
                 break;
+            case 69://e
+            if(worldEntitys[0].type != "player"){    
+            var temp = worldEntitys[0].type;
+                console.log(temp)
+                worldEntitys[0] = changeType(worldEntitys[0].x, worldEntitys[0].y, "player");
+                randomSpawnEntity(temp);
+            }
+                break;
         }
     }
     movePlayer(addX, addY)
@@ -87,4 +97,8 @@ function movePlayer(addToX, addToY) {
         worldEntitys[0].x += addToX;
         worldEntitys[0].moveCooldown = types[worldEntitys[0].type].moveCooldown;
     }
+}
+
+function randomSpawnEntity(type) {
+    worldEntitys.push(createEntity(Math.floor(Math.random() * Math.floor(worldInfo.maxX)), Math.floor(Math.random() * Math.floor(worldInfo.maxY)), type));
 }
