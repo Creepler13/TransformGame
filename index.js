@@ -1,16 +1,17 @@
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 var temp = undefined;
-var worldEntitys, gameState;
+var worldEntitys, gameState, timePassed;
 var worldInfo = { maxX: 1000, maxY: 1000 };
-var playerView = { maxX: canvas.width / 2, maxY: canvas.height / 2, cameraX: worldEntitys[0].x, cameraY: worldEntitys[0].y };
+var playerView = { maxX: canvas.width / 2, maxY: canvas.height / 2 };
 var ai = new Ai();
 var keysPressed = [];
+
 
 startGame();
 
 function startGame() {
-
+    timePassed = 0;
     worldEntitys = [createEntity(100, 100, "player")];
     gameState = true;
     var keys = [];
@@ -22,7 +23,7 @@ function startGame() {
     }
 
     setInterval(() => {
-
+        timePassed += 1 / 60;
         if (!gameState) {
             console.log("game end")
             //round ends / game over
@@ -30,7 +31,6 @@ function startGame() {
         }
 
         doKeyStuff();
-
 
         worldEntitys[0].update();
 
@@ -46,6 +46,10 @@ function startGame() {
         var e = worldEntitys[0];
         ctx.fillStyle = e.color
         ctx.fillRect(e.x, e.y, e.width, e.height);
+
+        ctx.fillStyle = "#000000";
+        ctx.font = "20px Arial";
+        ctx.fillText(Math.floor(timePassed), 20, 20);
 
     }, 16.6);
 }
