@@ -23,6 +23,8 @@ function startGame() {
     setInterval(() => {
 
         if (!gameState) {
+            console.log("game end")
+            //round ends / game over
             return;
         }
 
@@ -33,12 +35,17 @@ function startGame() {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        for (let index = 0; index < worldEntitys.length; index++) {
+        for (let index = 1; index < worldEntitys.length; index++) {
             var e = worldEntitys[index]
             e.update();
             ctx.fillStyle = e.color
             ctx.fillRect(e.x, e.y, e.width, e.height);
         }
+
+        var e = worldEntitys[0];
+        ctx.fillStyle = e.color
+        ctx.fillRect(e.x, e.y, e.width, e.height);
+
     }, 16.6);
 }
 

@@ -1,6 +1,6 @@
 class Entity {
 
-    constructor(x, y, type, color, width, height, movementSpeed, cooldown, special, moveCooldown) {
+    constructor(x, y, type, color, width, height, movementSpeed, cooldown, special, moveCooldown, updateOnUpdate) {
 
         this.x = x;
         this.y = y;
@@ -21,11 +21,10 @@ class Entity {
             } else if (this.type == "player") {
                 this.checkTouch();
             }
-            this.updateOnUpdate();
+            this.updateOnUpdate(this);
         }
 
-        this.updateOnUpdate = () => {
-        }
+        this.updateOnUpdate = updateOnUpdate;
 
         this.move = () => {
             if (this.moveCooldown == 0) {
@@ -66,22 +65,21 @@ class Entity {
 
 var types = {
 
-    player: { color: "#000000", width: 20, height: 20, movementSpeed: 2, cooldown: 100, canTransform: true, moveCooldown: 0, special: () => { console.log("player"); } },
-    enemy: { color: "#e50000", width: 20, height: 20, movementSpeed: 4, cooldown: 10, moveCooldown: 15, canTransform: false, scared: false, scareRadius: 100, special: () => { } },
-    frog: { color: "#00FF00", width: 5, population: 5, height: 5, movementSpeed: 20, cooldown: 10, moveCooldown: 50, canTransform: true, scared: true, scareRadius: 100, special: () => { } }
+    player: { color: "#000000", width: 20, height: 20, movementSpeed: 2, cooldown: 100, canTransform: true, moveCooldown: 0, special: () => { console.log("player"); }, updateOnUpdate: (en) => { } },
+    enemy: {
+        color: "#e50000", width: 20, height: 20, movementSpeed: 1, cooldown: 10, moveCooldown: 0, canTransform: false, scared: false, scareRadius: 250, special: () => { }, updateOnUpdate: (en) => {
+            var e = worldEntitys[0];
+            if (en.x + en.width > e.x && en.x < e.x + e.width && en.y + en.height > e.y && en.y < e.y + e.height) {
+                gameState = false;
+            }
+        }
+    },
+    frog: { color: "#00FF00", width: 5, population: 5, height: 5, movementSpeed: 20, cooldown: 10, moveCooldown: 50, canTransform: true, scared: true, scareRadius: 100, special: () => { }, updateOnUpdate: (en) => { } }
 
 }
 
 function createEntity(x, y, type) {
-
-    var color = types[type].color;
-    var width = types[type].width;
-    var height = types[type].height;
-    var cooldown = types[type].cooldown;
-    var movementSpeed = types[type].movementSpeed;
-    var special = types[type].special;
-    var moveCooldown = 0;
-    var e = new Entity(x, y, type, color, width, height, movementSpeed, cooldown, special, moveCooldown);
+    var e = new Entity(x, y, type, types[type].color, types[type].width, types[type].height, types[type].movementSpeed, types[type].cooldown, types[type].special, 0, types[type].updateOnUpdate);
     if (type == "player") {
         e.isPlayer = true;
     }
@@ -89,15 +87,7 @@ function createEntity(x, y, type) {
 }
 
 function changeType(x, y, type) {
-    var moveCooldown = types[type].moveCooldown;
-    var color = types[type].color;
-    var width = types[type].width;
-    var height = types[type].height;
-    var cooldown = types[type].cooldown;
-    var movementSpeed = types[type].movementSpeed;
-    var special = types[type].special;
-    var e = new Entity(x, y, type, color, width, height, movementSpeed, cooldown, special, moveCooldown);
+    var e = createEntity(x, y, type);
     e.isPlayer = true;
     return (e);
-
 }
