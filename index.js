@@ -1,18 +1,8 @@
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 var temp = undefined;
-var worldEntitys = [createEntity(100, 100, "player")];
-var gameState = true;
+var worldEntitys, gameState;
 var worldInfo = { maxX: 1000, maxY: 1000 };
-var keys = [];
-for (var k in types) keys.push(k);
-for (let i = 1; i < keys.length; i++) {
-    for (let index = 0; index < types[keys[i]].population; index++) {
-        randomSpawnEntity(keys[i]);
-    }
-}
-
-
 var playerView = { maxX: canvas.width / 2, maxY: canvas.height / 2, cameraX: worldEntitys[0].x, cameraY: worldEntitys[0].y };
 var ai = new Ai();
 var keysPressed = [];
@@ -20,6 +10,17 @@ var keysPressed = [];
 startGame();
 
 function startGame() {
+
+    worldEntitys = [createEntity(100, 100, "player")];
+    gameState = true;
+    var keys = [];
+    for (var k in types) keys.push(k);
+    for (let i = 1; i < keys.length; i++) {
+        for (let index = 0; index < types[keys[i]].population; index++) {
+            randomSpawnEntity(keys[i]);
+        }
+    }
+
     setInterval(() => {
 
         if (!gameState) {
@@ -136,6 +137,5 @@ function randomSpawnEntity(type) {
             }
         }
     }
-
     worldEntitys.push(createEntity(x, y, type));
 }
