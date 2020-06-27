@@ -6,7 +6,7 @@ var gameState = true;
 var worldInfo = { maxX: 1000, maxY: 1000 };
 var keys = [];
 for (var k in types) keys.push(k);
-for (let i = 2; i < keys.length; i++) {
+for (let i = 1; i < keys.length; i++) {
     for (let index = 0; index < types[keys[i]].population; index++) {
         randomSpawnEntity(keys[i]);
     }
@@ -114,5 +114,28 @@ function movePlayer(addToX, addToY) {
 }
 
 function randomSpawnEntity(type) {
-    worldEntitys.push(createEntity(Math.floor(Math.random() * Math.floor(worldInfo.maxX)), Math.floor(Math.random() * Math.floor(worldInfo.maxY)), type));
+    var makeNew = true;
+    while (makeNew) {
+        makeNew = false;
+        var x = Math.floor(Math.random() * Math.floor(worldInfo.maxX));
+        var y = Math.floor(Math.random() * Math.floor(worldInfo.maxY));
+        var width = types[type].width;
+        var height = types[type].height
+        if (type == "enemy") {
+            var player = worldEntitys[0];
+            var dist = Math.sqrt(Math.pow(x + width - (player.x + player.width), 2) + Math.pow(y + height - (player.y + player.height), 2))
+            if (dist <= types["enemy"].scareRadius) {
+                makeNew = true;
+            }
+        } else {
+            for (let index = 0; index < worldEntitys.length; index++) {
+                var e = worldEntitys[index];
+                if (x + width > e.x && x < e.x + e.width && y + height > e.y && y < e.y + e.height) {
+                    makeNew = true;
+                }
+            }
+        }
+    }
+
+    worldEntitys.push(createEntity(x, y, type));
 }

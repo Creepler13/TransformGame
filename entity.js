@@ -67,7 +67,7 @@ var types = {
 
     player: { color: "#000000", width: 20, height: 20, movementSpeed: 2, cooldown: 100, canTransform: true, moveCooldown: 0, special: () => { console.log("player"); }, updateOnUpdate: (en) => { } },
     enemy: {
-        color: "#e50000", width: 20, height: 20, movementSpeed: 1, cooldown: 10, moveCooldown: 0, canTransform: false, scared: false, scareRadius: 250, special: () => { }, updateOnUpdate: (en) => {
+        color: "#e50000", population: 3, width: 20, height: 20, movementSpeed: 1, cooldown: 10, moveCooldown: 0, canTransform: false, scared: false, scareRadius: 250, special: () => { }, updateOnUpdate: (en) => {
             var e = worldEntitys[0];
             if (en.x + en.width > e.x && en.x < e.x + e.width && en.y + en.height > e.y && en.y < e.y + e.height) {
                 gameState = false;
