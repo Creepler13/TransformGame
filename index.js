@@ -2,7 +2,7 @@ var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 var temp = undefined;
 var worldEntitys = [createEntity(100, 100, "player")];
-
+var gameState = true;
 var worldInfo = { maxX: 1000, maxY: 1000 };
 var keys = [];
 for (var k in types) keys.push(k);
@@ -17,23 +17,30 @@ var playerView = { maxX: canvas.width / 2, maxY: canvas.height / 2, cameraX: wor
 var ai = new Ai();
 var keysPressed = [];
 
-setInterval(() => {
+startGame();
 
-    doKeyStuff();
+function startGame() {
+    setInterval(() => {
+
+        if (!gameState) {
+            return;
+        }
+
+        doKeyStuff();
 
 
-    worldEntitys[0].update();
+        worldEntitys[0].update();
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    for (let index = 0; index < worldEntitys.length; index++) {
-        var e = worldEntitys[index]
-        e.update();
-        ctx.fillStyle = e.color
-        ctx.fillRect(e.x, e.y, e.width, e.height);
-    }
-}, 16.6);
-
+        for (let index = 0; index < worldEntitys.length; index++) {
+            var e = worldEntitys[index]
+            e.update();
+            ctx.fillStyle = e.color
+            ctx.fillRect(e.x, e.y, e.width, e.height);
+        }
+    }, 16.6);
+}
 
 document.onkeyup = function KeyEventHandler(e) {
     var code = e.keyCode;
@@ -79,12 +86,12 @@ function doKeyStuff() {
                 }
                 break;
             case 69://e
-            if(worldEntitys[0].type != "player"){    
-            var temp = worldEntitys[0].type;
-                console.log(temp)
-                worldEntitys[0] = changeType(worldEntitys[0].x, worldEntitys[0].y, "player");
-                randomSpawnEntity(temp);
-            }
+                if (worldEntitys[0].type != "player") {
+                    var temp = worldEntitys[0].type;
+                    console.log(temp)
+                    worldEntitys[0] = changeType(worldEntitys[0].x, worldEntitys[0].y, "player");
+                    randomSpawnEntity(temp);
+                }
                 break;
         }
     }
