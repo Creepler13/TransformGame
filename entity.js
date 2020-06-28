@@ -7,7 +7,6 @@ class Entity {
         this.type = type;
         this.color = color;
         this.isPlayer = false;
-        this.aiCooldown = 0;
         this.height = height;
         this.width = width;
         this.movementSpeed = movementSpeed;

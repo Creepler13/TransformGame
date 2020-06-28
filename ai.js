@@ -1,9 +1,5 @@
 class Ai {
-
-
     constructor() {
-
-
         this.getPos = (e) => {
             switch (types[e.type].scared) {
                 case true:
@@ -44,8 +40,9 @@ class Ai {
                     if (e.x + addX < 0 || e.x + addX > worldInfo.maxX - e.width) {
                         addX = 0;
                     }
-                    if (!e.scared) return [addX, addY];
-                    for (let index = 0; index < 2; index++) {
+                    //  if (!e.scared) return [addX, addY];
+                    var addSave = [addX, addY];
+                    for (let index = 0; index < 6; index++) {
                         var temp = true;
                         if (index == 1) {
                             addX = 0;
@@ -53,6 +50,19 @@ class Ai {
                         if (index == 2) {
                             addY = 0;
                         }
+                        if (index == 3) {
+                            addX = addSave[0] * -1;
+                        }
+                        if (index == 4) {
+                            addY = addSave[1];
+                        }
+                        if (index == 5) {
+                            addY = addSave[1] * -1;
+                        }
+                        if (index == 6) {
+                            addX = addSave[0];
+                        }
+
                         var tempEntitys = worldEntitys.filter(key => key != e);
                         for (let index = 1; index < tempEntitys.length; index++) {
                             var en = tempEntitys[index];
@@ -73,10 +83,6 @@ class Ai {
             } else {
                 return [0, 0]
             }
-
-
-
         }
     }
-
 }

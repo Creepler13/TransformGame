@@ -6,7 +6,7 @@ var worldInfo = { maxX: 1000, maxY: 1000 };
 var playerView = { maxX: canvas.width / 2, maxY: canvas.height / 2 };
 var ai = new Ai();
 var keysPressed = [];
-
+var gameLoop;
 
 startGame();
 
@@ -22,11 +22,10 @@ function startGame() {
         }
     }
 
-    setInterval(() => {
+    gameLoop = setInterval(() => {
         timePassed += 1 / 60;
         if (!gameState) {
-            console.log("game end")
-            //round ends / game over
+            stopGame();
             return;
         }
 
@@ -55,6 +54,9 @@ function startGame() {
 }
 
 document.onkeyup = function KeyEventHandler(e) {
+    if (!gameState && e.keyCode == 82) {
+        startGame();
+    }
     var code = e.keyCode;
     keysPressed = keysPressed.filter(key => key != code);
 }
@@ -122,10 +124,10 @@ function randomSpawnEntity(type) {
     var makeNew = true;
     while (makeNew) {
         makeNew = false;
-        var x = Math.floor(Math.random() * Math.floor(worldInfo.maxX));
-        var y = Math.floor(Math.random() * Math.floor(worldInfo.maxY));
         var width = types[type].width;
         var height = types[type].height
+        var x = Math.floor(Math.random() * Math.floor(worldInfo.maxX - width));
+        var y = Math.floor(Math.random() * Math.floor(worldInfo.maxY - height));
         if (type == "enemy") {
             var player = worldEntitys[0];
             var dist = Math.sqrt(Math.pow(x + width - (player.x + player.width), 2) + Math.pow(y + height - (player.y + player.height), 2))
@@ -142,4 +144,14 @@ function randomSpawnEntity(type) {
         }
     }
     worldEntitys.push(createEntity(x, y, type));
+}
+
+function stopGame() {
+
+    console.log("game end")
+    ctx.font = "50px Arial";
+    ctx.fillStyle = "#000000";
+    ctx.fillText("Game Over \n r to restart", playerView.maxY, playerView.maxX);
+    clearInterval(gameLoop);
+
 }
