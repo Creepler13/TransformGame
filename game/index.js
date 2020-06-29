@@ -7,6 +7,7 @@ var playerView = { maxX: canvas.width / 2, maxY: canvas.height / 2 };
 var ai = new Ai();
 var keysPressed = [];
 var gameLoop;
+var scareLines = false;
 
 startGame();
 

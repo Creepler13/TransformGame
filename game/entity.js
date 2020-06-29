@@ -108,7 +108,7 @@ var types = {
                         return [false, 1, y]
                 }
             }
-        }, moveCooldown: 2, canTransform: false, scared: false, scareRadius: 1000, special: () => { }, updateOnUpdate: (en) => {
+        }, moveCooldown: 2, canTransform: false, scared: false, scareRadius: worldInfo.maxY * 2, special: () => { }, updateOnUpdate: (en) => {
             var entityts = worldEntitys.filter(key => key != en);
             for (let index = 0; index < entityts.length; index++) {
                 var e = entityts[index];

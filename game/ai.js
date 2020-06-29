@@ -15,23 +15,28 @@ class Ai {
         function normalEntity(e) {
             var player = worldEntitys[0];
             if (player.type == "player" || !e.scared) {
-                var dist = Math.sqrt(Math.pow(e.x + e.width - (player.x + player.width), 2) + Math.pow(e.y + e.height - (player.y + player.height), 2))
+                var dist = Math.sqrt(Math.pow(e.x + e.width / 2 - (player.x + player.width / 2), 2) + Math.pow(e.y + e.height / 2 - (player.y + player.height / 2), 2))
                 var addX = 0;
                 var addY = 0;
                 if (dist <= types[e.type].scareRadius) {
 
-                    var xDist = player.x + player.width - (e.x + e.width)
-                    var yDist = player.y + player.height - (e.y + e.height)
-                    if (xDist > e.height - 1) {
+                    var xDist = player.x + player.width / 2 - (e.x + e.width / 2)
+                    var yDist = player.y + player.height / 2 - (e.y + e.height / 2)
+
+                    if (scareLines) {
+                        lineTo(player.x + player.width / 2, player.y + player.height / 2, e.x + e.width / 2, e.y + e.height / 2)
+                    }
+
+                    if (xDist > e.height / 2 - 1) {
                         addX = e.movementSpeed * -1;
                     }
-                    if (xDist < player.height * -1 + 1) {
+                    if (xDist < player.height / 2 * -1 + 1) {
                         addX = e.movementSpeed;
                     }
-                    if (yDist > e.height - 1) {
+                    if (yDist > e.height / 2 - 1) {
                         addY = e.movementSpeed * -1;
                     }
-                    if (yDist < player.height * -1 + 1) {
+                    if (yDist < player.height / 2 * -1 + 1) {
                         addY = e.movementSpeed;
                     }
 
@@ -39,8 +44,8 @@ class Ai {
                     if (e.y + addY > worldInfo.maxY - e.height) { addY = 1; }
                     if (e.x + addX < 0) { addX = -1; };
                     if (e.x + addX > worldInfo.maxX - e.height) { addX = 1; }
-                    //  if (!e.scared) return [addX, addY];
                     var addSave = [addX, addY];
+                    if (!e.scared) return addSave
                     for (let index = 0; index < 6; index++) {
                         var temp = true;
                         if (index == 1) {
@@ -56,6 +61,7 @@ class Ai {
                             addY = addSave[1];
                         }
                         if (index == 5) {
+                            s
                             addY = addSave[1] * -1;
                         }
                         if (index == 6) {
@@ -84,4 +90,12 @@ class Ai {
             }
         }
     }
+}
+
+function lineTo(x, y, x1, y1) {
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x1, y1);
+    ctx.strokeStyle = "red";
+    ctx.stroke();
 }
