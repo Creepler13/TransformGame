@@ -34,12 +34,11 @@ class Ai {
                     if (yDist < player.height * -1 + 1) {
                         addY = e.movementSpeed;
                     }
-                    if (e.y + addY < 0 || e.y + addY > worldInfo.maxY - e.height) {
-                        addY = 0;
-                    }
-                    if (e.x + addX < 0 || e.x + addX > worldInfo.maxX - e.width) {
-                        addX = 0;
-                    }
+
+                    if (e.y + addY < 0) { addY = -1; };
+                    if (e.y + addY > worldInfo.maxY - e.height) { addY = 1; }
+                    if (e.x + addX < 0) { addX = -1; };
+                    if (e.x + addX > worldInfo.maxX - e.height) { addX = 1; }
                     //  if (!e.scared) return [addX, addY];
                     var addSave = [addX, addY];
                     for (let index = 0; index < 6; index++) {

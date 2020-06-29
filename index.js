@@ -22,7 +22,7 @@ function startGame() {
         }
     }
 
-    
+
     gameLoop = setInterval(() => {
         timePassed += 1 / 60;
         if (!gameState) {
@@ -129,20 +129,19 @@ function randomSpawnEntity(type) {
         var height = types[type].height
         var x = Math.floor(Math.random() * Math.floor(worldInfo.maxX - width));
         var y = Math.floor(Math.random() * Math.floor(worldInfo.maxY - height));
-        if (type == "enemy") {
-            var player = worldEntitys[0];
-            var dist = Math.sqrt(Math.pow(x + width - (player.x + player.width), 2) + Math.pow(y + height - (player.y + player.height), 2))
-            if (dist <= types["enemy"].scareRadius) {
+        var funct = types[type].spawnPosCheck;
+        var req = funct(x, y, width, height);
+        makeNew = req[0]
+        x = req[1];
+        y = req[2];
+        if (makeNew) continue;
+        for (let index = 0; index < worldEntitys.length; index++) {
+            var e = worldEntitys[index];
+            if (x + width > e.x && x < e.x + e.width && y + height > e.y && y < e.y + e.height) {
                 makeNew = true;
             }
-        } else {
-            for (let index = 0; index < worldEntitys.length; index++) {
-                var e = worldEntitys[index];
-                if (x + width > e.x && x < e.x + e.width && y + height > e.y && y < e.y + e.height) {
-                    makeNew = true;
-                }
-            }
         }
+
     }
     worldEntitys.push(createEntity(x, y, type));
 }
