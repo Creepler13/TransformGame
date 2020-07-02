@@ -10,6 +10,7 @@ var random = 50;
 var reviseIndex = -1;
 var GameLoop;
 var scareLines = false;
+var drawScreen = true;
 var keyToIndex = [87, 65, 83, 68, 81, 69]
 var output = 6;
 var input = (3 + 5 + 2 + 1) * 2 + 1 + 1;
@@ -19,7 +20,9 @@ var learning_rate = 0.005;
 var points;
 var distReward = 0;
 var memory = [];
+var model;
 var maxMemory = 300;
+var maxTimeToContiune = 13;
 
 var rewardTable = {
     death: -10,
@@ -31,16 +34,7 @@ var rewardKeys = []
 for (k in rewardTable) rewardKeys.push(k);
 rewardKeys = rewardKeys.filter(e => e != "idle");
 
-var model = tf.sequential()
-model.add(tf.layers.dense({ units: 120, activation: 'sigmoid', inputShape: input }))
-model.add(tf.layers.dropout(0.15))
-model.add(tf.layers.dense({ units: 120, activation: 'sigmoid' }))
-model.add(tf.layers.dropout(0.15))
-model.add(tf.layers.dense({ units: 120, activation: 'sigmoid' }))
-model.add(tf.layers.dropout(0.15))
-model.add(tf.layers.dense({ units: output, activation: 'softmax' }))
-var opt = tf.train.adam(learning_rate)
-model.compile({ loss: 'meanSquaredError', optimizer: opt })
+
 
 
 
@@ -199,8 +193,24 @@ function changeType(x, y, type) {
 }
 
 
-
+/** 
+model = tf.sequential()
+model.add(tf.layers.dense({ units: 60, activation: 'sigmoid', inputShape: input }))
+model.add(tf.layers.dropout(0.15))
+model.add(tf.layers.dense({ units: 30, activation: 'sigmoid' }))
+model.add(tf.layers.dropout(0.15))
+model.add(tf.layers.dense({ units: output, activation: 'softmax' }))
+var opt = tf.train.adam(learning_rate);
+model.compile({ loss: 'meanSquaredError', optimizer: opt });
 startGame();
+*/
+
+
+load();
+
+
+
+
 
 
 function startGame() {
@@ -280,20 +290,23 @@ function gameLoop() {
     for (let index = 1; index < worldEntitys.length; index++) {
         var e = worldEntitys[index]
         e.update();
-        ctx.fillStyle = e.color
-        ctx.fillRect(e.x, e.y, e.width, e.height);
+        if (drawScreen) {
+            ctx.fillStyle = e.color
+            ctx.fillRect(e.x, e.y, e.width, e.height);
+        }
     }
 
     var newState = getState();
 
-    var e = worldEntitys[0];
-    ctx.fillStyle = e.color
-    ctx.fillRect(e.x, e.y, e.width, e.height);
+    if (drawScreen) {
+        var e = worldEntitys[0];
+        ctx.fillStyle = e.color
+        ctx.fillRect(e.x, e.y, e.width, e.height);
 
-    ctx.fillStyle = "#000000";
-    ctx.font = "20px Arial";
-    ctx.fillText(Math.floor(timePassed), 20, 20);
-
+        ctx.fillStyle = "#000000";
+        ctx.font = "20px Arial";
+        ctx.fillText(Math.floor(timePassed), 20, 20);
+    }
     train(oldState, newState);
 }
 
@@ -301,7 +314,7 @@ function gameLoop() {
 function train(oldState, newState) {
     reward = reward + distReward;
 
-    if (reward >= rewardTable["enemy"] + distReward) {
+    if (reward >= rewardTable["enemy"] + distReward || timePassed > maxTimeToContiune) {
         random++;
     }
 
@@ -392,24 +405,35 @@ function getMaxQ(state, index) {
     return [Qs.indexOf(Math.max(...Qs)), Qs];
 }
 
-/** 
- * 
-document.onkeyup = function KeyEventHandler(e) {
-    if (!gameState && e.keyCode == 82) {
-        startGame();
-    }
-    var code = e.keyCode;
-    keysPressed = keysPressed.filter(key => key != code);
+async function save() {
+    await model.save('file://models/model');
 }
 
+async function load(compile) {
+    model = await tf.loadLayersModel("file://models/model.json");
+    var opt = tf.train.adam(learning_rate);
+    model.compile({ loss: 'meanSquaredError', optimizer: opt });
+    startGame();
+}
+
+document.onkeyup = function KeyEventHandler(e) {
+    if (e.keyCode == 82) //r to save game
+    {
+        save();
+    }
+    // var code = e.keyCode;
+    //keysPressed = keysPressed.filter(key => key != code);
+}
+
+/** 
 document.onkeydown = function KeyEventHandler(e) {
     var code = e.keyCode;
     if (!keysPressed.includes(code)) {
         keysPressed.push(code);
     }
 }
-*/
 
+*/
 
 
 function addKeys(arr) {
