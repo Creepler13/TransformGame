@@ -11,23 +11,29 @@ var reviseIndex = -1;
 var GameLoop;
 var scareLines = false;
 var drawScreen = true;
-var keyToIndex = [87, 65, 83, 68, 81, 69]
-var output = 6;
+var run = 0;
+var training = 0;
+var keyToIndex = [87, 65, 83, 68]
+var output = keyToIndex.length;
 var input = (3 + 5 + 2 + 1) * 2 + 1 + 1;
 var reward;
 var tf = require("@tensorflow/tfjs-node-gpu");
 var learning_rate = 0.005;
 var points;
-var distReward = 0;
 var memory = [];
+var rewardScaler = 300;
 var model;
 var maxMemory = 300;
+var loadModel = true;
+var tempRewardSave = 0;
 var maxTimeToContiune = 13;
+var scareConnections = 0;
+var distReward = 0;
 
 var rewardTable = {
     death: -10,
-    missile: 2,
-    enemy: 4,
+    missile: 0,
+    enemy: 0,
     idle: 0
 }
 var rewardKeys = []
@@ -132,7 +138,7 @@ types = {
             }
         }
     }, missile: {
-        color: "#ff00ff", population: 2, width: 6, height: 6, movementSpeed: 3, cooldown: 10, spawnPosCheck: (x, y, width, height) => {
+        color: "#ff00ff", population: 2, width: 6, height: 6, movementSpeed: 1, cooldown: 10, spawnPosCheck: (x, y, width, height) => {
             if (x == 1 || x == worldInfo.maxX - width - 1 || y == 1 || y == worldInfo.maxY - height - 1) {
                 return [false, x, y]
             } else {
@@ -193,30 +199,33 @@ function changeType(x, y, type) {
 }
 
 
-/** 
-model = tf.sequential()
-model.add(tf.layers.dense({ units: 60, activation: 'sigmoid', inputShape: input }))
-model.add(tf.layers.dropout(0.15))
-model.add(tf.layers.dense({ units: 30, activation: 'sigmoid' }))
-model.add(tf.layers.dropout(0.15))
-model.add(tf.layers.dense({ units: output, activation: 'softmax' }))
-var opt = tf.train.adam(learning_rate);
-model.compile({ loss: 'meanSquaredError', optimizer: opt });
-startGame();
-*/
+if (!loadModel) {
+    model = tf.sequential()
+    model.add(tf.layers.dense({ units: 80, activation: 'sigmoid', inputShape: input }))
+    model.add(tf.layers.dropout(0.15))
+    model.add(tf.layers.dense({ units: 60, activation: 'sigmoid' }))
+    model.add(tf.layers.dropout(0.15))
+    model.add(tf.layers.dense({ units: 60, activation: 'sigmoid' }))
+    model.add(tf.layers.dropout(0.15))
+    model.add(tf.layers.dense({ units: output, activation: 'softmax' }))
+    var opt = tf.train.adam(learning_rate);
+    model.compile({ loss: 'meanSquaredError', optimizer: opt });
+    startGame();
 
+} else {
 
-load();
-
+    load();
+}
 
 
 
 
 
 function startGame() {
+    run++;
     timePassed = 0;
     points = 0;
-    worldEntitys = [createEntity(100, 100, "player")];
+    worldEntitys = [createEntity(500, 500, "player")];
     gameState = true;
     var keys = [];
     for (var k in types) keys.push(k);
@@ -254,12 +263,9 @@ function getState() {
     var player = worldEntitys[0];
     for (let index = 1; index < worldEntitys.length; index++) {
         var e = worldEntitys[index];
-        state.push(xDist = player.x + player.width / 2 - (e.x + e.width / 2))
-        state.push(yDist = player.y + player.height / 2 - (e.y + e.height / 2))
-
+        state.push(e.x)
+        state.push(e.y)
     }
-
-
     state.push(player.x);
     state.push(player.y);
     state.push(points);
@@ -271,6 +277,7 @@ function getState() {
 }
 
 function gameLoop() {
+    scareConnections = 0;
     distReward = 0;
     timePassed += 1 / 60;
     if (!gameState) {
@@ -290,6 +297,11 @@ function gameLoop() {
     for (let index = 1; index < worldEntitys.length; index++) {
         var e = worldEntitys[index]
         e.update();
+        var dist = Math.sqrt(Math.pow(e.x + e.width / 2 - (worldEntitys[0].x + worldEntitys[0].width / 2), 2) + Math.pow(e.y + e.height / 2 - (worldEntitys[0].y + worldEntitys[0].height / 2), 2))
+        if (dist <= types[e.type].scareRadius) {
+            distReward = distReward + dist;
+            scareConnections++;
+        }
         if (drawScreen) {
             ctx.fillStyle = e.color
             ctx.fillRect(e.x, e.y, e.width, e.height);
@@ -307,14 +319,26 @@ function gameLoop() {
         ctx.font = "20px Arial";
         ctx.fillText(Math.floor(timePassed), 20, 20);
     }
+
     train(oldState, newState);
+}
+
+function testPredict() {
+    model.predict(tf.tensor(getState(), [1, input])).dataSync()
 }
 
 
 function train(oldState, newState) {
-    reward = reward + distReward;
+    if (distReward < tempRewardSave) {
+        tempRewardSave = distReward;
+        distReward = distReward * -1;
+    } else {
+        tempRewardSave = distReward;
+    }
 
-    if (reward >= rewardTable["enemy"] + distReward || timePassed > maxTimeToContiune) {
+
+    reward = reward + distReward / rewardScaler / scareConnections
+    if (timePassed > maxTimeToContiune) {
         random++;
     }
 
@@ -323,7 +347,7 @@ function train(oldState, newState) {
 
     var targetF;
     var target;
-    if (reward == rewardTable["death"] + distReward) {
+    if (reward == rewardTable["death"] + distReward / rewardScaler / scareConnections) {
         targetF = reward;
     } else {
         targetF = reward + Qs[maxQ[0]];
@@ -332,15 +356,17 @@ function train(oldState, newState) {
     Qs[maxQ[0]] = targetF;
     target = Qs
 
-    for (let index = 0; index < rewardKeys.length; index++) {
-        if (reward == rewardTable[rewardKeys[index]] + distReward) {
-            remember(oldState, newState, reward + distReward);
-            break;
-        }
-    }
+    //  for (let index = 0; index < rewardKeys.length; index++) {
+    //     if (reward == rewardTable[rewardKeys[index]] + distReward / scareConnections) {
+    //         remember(oldState, newState, reward);
+    //         break;
+    //     }
+    // }
 
     model.fit(tf.tensor(oldState, [1, input]), tf.tensor(target, [1, output])).then(info => {
-        if (reward == rewardTable["death"] + distReward) {
+        training++;
+        if (reward == rewardTable["death"] + distReward / rewardScaler / scareConnections) {
+            remember(oldState, newState, reward, true);
             revise();
         } else {
             gameLoop();
@@ -356,27 +382,25 @@ function revise() {
     newState = memory[reviseIndex].n;
     oldState = memory[reviseIndex].o;
 
-    reward = reward + distReward;
-
     var maxQ = getMaxQ(newState, true);
     var Qs = maxQ[1]
 
 
     var targetF;
     var target;
-    if (reward == rewardTable["death"] + distReward) {
+    if (memory[reviseIndex].d) {
         targetF = reward;
     } else {
-        targetF = reward + Qs[maxQ[0]];
+        targetF = reward + learning_rate * Qs[maxQ[0]];
     }
 
     Qs[maxQ[0]] = targetF;
     target = Qs
 
     model.fit(tf.tensor(oldState, [1, input]), tf.tensor(target, [1, output])).then(info => {
+        training++;
         if (reviseIndex >= memory.length - 1) {
             reviseIndex = -1;
-            memory = [];
             startGame();
         } else {
             revise();
@@ -385,11 +409,11 @@ function revise() {
 }
 
 
-function remember(oldS, newS, reward) {
+function remember(oldS, newS, reward, death) {
     if (memory.length >= maxMemory) {
         memory[Math.floor(Math.random() * maxMemory)].push({ o: oldS, n: newS, r: reward });
     } else {
-        memory.push({ o: oldS, n: newS, r: reward });
+        memory.push({ o: oldS, n: newS, r: reward, d: death });
     }
 }
 
@@ -406,7 +430,7 @@ function getMaxQ(state, index) {
 }
 
 async function save() {
-    await model.save('file://models/model');
+    await model.save('file://models');
 }
 
 async function load(compile) {
@@ -514,15 +538,12 @@ function normalEntity(e) {
     var player = worldEntitys[0];
     if (player.type == "player" || !e.scared) {
         var dist = Math.sqrt(Math.pow(e.x + e.width / 2 - (player.x + player.width / 2), 2) + Math.pow(e.y + e.height / 2 - (player.y + player.height / 2), 2))
-        distReward = distReward + dist / 100 / 2;
         var addX = 0;
         var addY = 0;
         if (dist <= types[e.type].scareRadius) {
 
             var xDist = player.x + player.width / 2 - (e.x + e.width / 2)
             var yDist = player.y + player.height / 2 - (e.y + e.height / 2)
-
-
 
             if (scareLines) {
                 lineTo(player.x + player.width / 2, player.y + player.height / 2, e.x + e.width / 2, e.y + e.height / 2)
