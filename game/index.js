@@ -6,14 +6,14 @@ var worldEntitys, gameState, timePassed;
 var worldInfo = { maxX: 1000, maxY: 1000 };
 var playerView = { maxX: canvas.width / 2, maxY: canvas.height / 2 };
 var keysPressed = [];
-var random = 50;
+var random = 70;
 var reviseIndex = -1;
 var GameLoop;
 var scareLines = false;
 var drawScreen = true;
 var run = 0;
 var training = 0;
-var keyToIndex = [87, 65, 83, 68]
+var keyToIndex = [87, 65, 83, 68, ""]
 var output = keyToIndex.length;
 var input = (3 + 5 + 2 + 1) * 2 + 1 + 1;
 var reward;
@@ -21,7 +21,7 @@ var tf = require("@tensorflow/tfjs-node-gpu");
 var learning_rate = 0.005;
 var points;
 var memory = [];
-var rewardScaler = 300;
+var rewardScaler = 250;
 var model;
 var maxMemory = 300;
 var loadModel = true;
@@ -29,6 +29,8 @@ var tempRewardSave = 0;
 var maxTimeToContiune = 13;
 var scareConnections = 0;
 var distReward = 0;
+var RandomMaxMax = 7 / 8;
+var maxRandom = 300;
 
 var rewardTable = {
     death: -10,
@@ -109,73 +111,156 @@ class Entity {
 }
 
 types = {
-
-    player: { color: "#000000", width: 20, height: 20, movementSpeed: 2, cooldown: 100, canTransform: true, moveCooldown: 0, special: () => { console.log("player"); }, updateOnUpdate: (en) => { } },
-    enemy: {
-        color: "#e50000", population: 3, width: 20, height: 20, movementSpeed: 1, spawnPosCheck: (x, y, width, height) => {
-            var player = worldEntitys[0];
-            var dist = Math.sqrt(Math.pow(x + width - (player.x + player.width), 2) + Math.pow(y + height - (player.y + player.height), 2));
-            if (dist <= types["enemy"].scareRadius) {
-                return [true, x, y];
+    "player": {
+        "color": "#000000",
+        "width": 20,
+        "height": 20,
+        "movementSpeed": 2,
+        "cooldown": 100,
+        "canTransform": true,
+        "moveCooldown": 0,
+        "special": () => {
+            console.log("player");
+        }, updateOnUpdate: (en) => { }
+    },
+    "enemy": {
+        color: "#e50000",
+        "population": 3,
+        "width": 20,
+        "height": 20,
+        "movementSpeed": 1,
+        "spawnPosCheck": (x, y, width, height) => {
+            var player = worldEntitys[
+                0
+            ];
+            var dist = Math.sqrt(Math.pow(x + width - (player.x + player.width),
+                2) + Math.pow(y + height - (player.y + player.height),
+                    2));
+            if (dist <= types[
+                "enemy"
+            ].scareRadius) {
+                return [
+                    true, x, y
+                ];
             }
-            return [false, x, y];
-        }, cooldown: 10, moveCooldown: 0, canTransform: false, scared: false, scareRadius: 250, special: () => { }, updateOnUpdate: (en) => {
+            return [
+                false, x, y
+            ];
+        }, "cooldown": 10,
+        "moveCooldown": 0,
+        "canTransform": false,
+        "scared": false,
+        "scareRadius": 250,
+        "special": () => { },
+        "updateOnUpdate": (en) => {
             var entityts = worldEntitys.filter(key => key != en);
             for (let index = 0; index < entityts.length; index++) {
-                var e = entityts[index];
+                var e = entityts[index
+                ];
                 if (en.x + en.width > e.x && en.x < e.x + e.width && en.y + en.height > e.y && en.y < e.y + e.height) {
                     if (index == 0) {
                         death();
-                    } else if (!types[e.type].scared) {
+                    } else if (!types[e.type
+                    ].scared) {
                         worldEntitys = worldEntitys.filter(key => key != e);
                         worldEntitys = worldEntitys.filter(key => key != en);
                         randomSpawnEntity(e.type);
                         randomSpawnEntity(en.type);
-                        reward = rewardTable[e.type] + rewardTable[en.type];
-                        return;
-                    }
-                }
-            }
-        }
-    }, missile: {
-        color: "#ff00ff", population: 2, width: 6, height: 6, movementSpeed: 1, cooldown: 10, spawnPosCheck: (x, y, width, height) => {
-            if (x == 1 || x == worldInfo.maxX - width - 1 || y == 1 || y == worldInfo.maxY - height - 1) {
-                return [false, x, y]
-            } else {
-                switch (Math.floor(Math.random() * Math.floor(4))) {
-                    case 0:
-                        return [false, 1, y]
-                    case 1:
-                        return [false, worldInfo.maxX - width, y - 1]
-                    case 2:
-                        return [false, x, 1]
-                    case 3:
-                        return [false, x, worldInfo.maxY - height - 1]
-                    default:
-                        return [false, 1, y]
-                }
-            }
-        }, moveCooldown: 2, canTransform: false, scared: false, scareRadius: worldInfo.maxY * 2, special: () => { }, updateOnUpdate: (en) => {
-            var entityts = worldEntitys.filter(key => key != en);
-            for (let index = 0; index < entityts.length; index++) {
-                var e = entityts[index];
-                if (en.x + en.width > e.x && en.x < e.x + e.width && en.y + en.height > e.y && en.y < e.y + e.height) {
-                    if (index == 0) {
-                        death();
-                    } else if (!types[e.type].scared) {
-                        worldEntitys = worldEntitys.filter(key => key != e);
-                        worldEntitys = worldEntitys.filter(key => key != en);
-                        randomSpawnEntity(e.type);
-                        randomSpawnEntity(en.type);
-                        reward = rewardTable[e.type] + rewardTable[en.type];
+                        reward = rewardTable[e.type
+                        ] + rewardTable[en.type
+                            ];
                         return;
                     }
                 }
             }
         }
     },
-    frog: { color: "#00FF00", width: 5, population: 5, height: 5, movementSpeed: 20, spawnPosCheck: (x, y, width, height) => { return [false, x, y] }, cooldown: 10, moveCooldown: 50, canTransform: true, scared: true, scareRadius: 100, special: () => { }, updateOnUpdate: (en) => { } }
-
+    "missile": {
+        "color": "#ff00ff",
+        "population": 2,
+        "width": 6,
+        "height": 6,
+        "movementSpeed": 1.5,
+        "cooldown": 10,
+        "spawnPosCheck": (x, y, width, height) => {
+            if (x == 1 || x == worldInfo.maxX - width - 1 || y == 1 || y == worldInfo.maxY - height - 1) {
+                return [
+                    false, x, y
+                ]
+            } else {
+                switch (Math.floor(Math.random() * Math.floor(4))) {
+                    case 0:
+                        return [
+                            false,
+                            1, y
+                        ]
+                    case 1:
+                        return [
+                            false, worldInfo.maxX - width, y - 1
+                        ]
+                    case 2:
+                        return [
+                            false, x,
+                            1
+                        ]
+                    case 3:
+                        return [
+                            false, x, worldInfo.maxY - height - 1
+                        ]
+                    default:
+                        return [
+                            false,
+                            1, y
+                        ]
+                }
+            }
+        },
+        "moveCooldown": 2,
+        "canTransform": false,
+        "scared": false,
+        "scareRadius": worldInfo.maxY * 2,
+        "special": () => { }, updateOnUpdate: (en) => {
+            var entityts = worldEntitys.filter(key => key != en);
+            for (let index = 0; index < entityts.length; index++) {
+                var e = entityts[index
+                ];
+                if (en.x + en.width > e.x && en.x < e.x + e.width && en.y + en.height > e.y && en.y < e.y + e.height) {
+                    if (index == 0) {
+                        death();
+                    } else if (!types[e.type
+                    ].scared) {
+                        worldEntitys = worldEntitys.filter(key => key != e);
+                        worldEntitys = worldEntitys.filter(key => key != en);
+                        randomSpawnEntity(e.type);
+                        randomSpawnEntity(en.type);
+                        reward = rewardTable[e.type
+                        ] + rewardTable[en.type
+                            ];
+                        return;
+                    }
+                }
+            }
+        }
+    },
+    "frog": {
+        "color": "#00FF00",
+        "width": 5,
+        "population": 5,
+        "height": 5,
+        "movementSpeed": 20,
+        "spawnPosCheck": (x, y, width, height) => {
+            return [
+                false, x, y
+            ]
+        },
+        "cooldown": 10,
+        "moveCooldown": 50,
+        "canTransform": true,
+        "scared": true,
+        "scareRadius": 100,
+        "special": () => { },
+        "updateOnUpdate": (en) => { }
+    }
 }
 
 function death() {
@@ -242,7 +327,7 @@ doMoveTf();
 function doMoveTf(state) {
     reward = rewardTable["idle"];
     var keys = [];
-    if (Math.floor(Math.random() * 100) > random) {
+    if (Math.floor(Math.random() * maxRandom) > random) {
         for (let index = 0; index < Math.floor(Math.random() * keyToIndex.length); index++) {
             keys.push(0);
         }
@@ -323,8 +408,8 @@ function gameLoop() {
     train(oldState, newState);
 }
 
-function testPredict() {
-    model.predict(tf.tensor(getState(), [1, input])).dataSync()
+function Predict() {
+    console.log(model.predict(tf.tensor(getState(), [1, input])).dataSync())
 }
 
 
@@ -338,7 +423,7 @@ function train(oldState, newState) {
 
 
     reward = reward + distReward / rewardScaler / scareConnections
-    if (timePassed > maxTimeToContiune) {
+    if (timePassed > maxTimeToContiune && random < maxRandom * RandomMaxMax) {
         random++;
     }
 
@@ -411,7 +496,7 @@ function revise() {
 
 function remember(oldS, newS, reward, death) {
     if (memory.length >= maxMemory) {
-        memory[Math.floor(Math.random() * maxMemory)].push({ o: oldS, n: newS, r: reward });
+        memory[Math.floor(Math.random() * maxMemory)] = { o: oldS, n: newS, r: reward };
     } else {
         memory.push({ o: oldS, n: newS, r: reward, d: death });
     }
