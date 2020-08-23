@@ -1,3 +1,3 @@
 # TransformGame
 
-https://creepler13.github.io/TransformGame/
+A Tensorflow Deep-learning test
