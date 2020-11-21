@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@tensorflow/tfjs-node-gpu": "^2.0.1",
-    "electron": ">=9.0.5",
+    "electron": ">=9.3.1",
     "fs": "0.0.1-security"
   }
 }
